@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <dirent.h>
+#include <stddef.h>
 
 /**
 * struct choice_built - getting the commands in validation
