@@ -1,50 +1,45 @@
 #include "shell.h"
 
 /**
-* main - Entry point
-* @ac: ac
-* @arg: array
-* Return: 0
-*/
-
-int main(int ac __attribute__((unused)), char **arg  __attribute__((unused)))
+ * main - entry point
+ * @ac: arg count
+ * @av: arg vector
+ *
+ * Return: 0 on success, 1 on error
+ */
+int main(int ac, char **av)
 {
-char **args = NULL;
-char *input_s = NULL;
-int ac_s = 1;
-int exit_s = 0;
+	info_t info[] = { INFO_INIT };
+	int fd = 2;
 
+	asm ("mov %1, %0\n\t"
+			"add $3, %0"
+			: "=r" (fd)
+			: "r" (fd));
 
-ssize_t nil = 0;
-size_t si_se = 0;
-
-while (ac_s && nil != EOF)
-{
-si_se = 0;
-ac_s = isatty(STDIN_FILENO);
-
-if (ac_s)
-write(STDOUT_FILENO, "", 0);
-
-signal(SIGINT, signal_handler);
-nil = getline(&input_s, &si_se, stdin);
-if (nil == -1)
-{
-free(input_s);
-break;
-}
-if (space_validation(input_s))
-{
-free(input_s);
-continue;
-}
-args = _tonken(input_s);
-if (*args[0] == '\0')
-continue;
-ac_s = _exe(args, input_s, arg, &exit_s);
-free(input_s);
-free(args);
+	if (ac == 2)
+	{
+		fd = open(av[1], O_RDONLY);
+		if (fd == -1)
+		{
+			if (errno == EACCES)
+				exit(126);
+			if (errno == ENOENT)
+			{
+				_eputs(av[0]);
+				_eputs(": 0: Can't open ");
+				_eputs(av[1]);
+				_eputchar('\n');
+				_eputchar(BUF_FLUSH);
+				exit(127);
+			}
+			return (EXIT_FAILURE);
+		}
+		info->readfd = fd;
+	}
+	populate_env_list(info);
+	read_history(info);
+	hsh(info, av);
+	return (EXIT_SUCCESS);
 }
 
-return (0);
-}
